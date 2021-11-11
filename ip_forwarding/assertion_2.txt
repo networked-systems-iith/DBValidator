@@ -1,0 +1,53 @@
+
+//ACTION DEF BEGIN
+action assert_check_pass_2(){
+	META_INSTANCE.assertion_check_2 = 1;
+}
+
+ //ACTION DEF END
+
+//ACTION DEF BEGIN
+action assert_check_fail_2(){
+	META_INSTANCE.assertion_check_2 = 0;
+}
+
+ //ACTION DEF END
+
+
+//BEGIN FILTER PATH
+	table assert_2_1{
+	key = {
+		 META_INSTANCE.BL : exact;
+	}
+	actions = {
+		assert_check_pass_2;
+		assert_check_fail_2;
+		NoAction;
+	}
+	const default_action = assert_check_fail_2;
+	const entries = {
+		 BLCODE(MyIngress.ipv4_forward): assert_check_pass_2();
+	} 
+}
+
+//END FILTER PATH
+
+//BEGIN MATCH EXP
+		if(hdr.ipv4.ttl>0){
+			assert_check_pass_2();
+		}else{
+			assert_check_fail_2();
+		}
+//END MATCH EXP
+//BEGIN FILTER INVOCATION 
+		assert_2_1.apply();
+	
+//END FILTER INVOCATION
+
+
+//META VAR DECLARE BEGIN
+	bit<1> assertion_check_1;
+//META VAR DECLARE END
+//META VAR DECLARE BEGIN
+	bit<1> assertion_check_2;
+//META VAR DECLARE END

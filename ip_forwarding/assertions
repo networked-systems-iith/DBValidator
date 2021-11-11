@@ -1,0 +1,2 @@
+filter(MyIngress.ipv4_forward) ~ match(hdr.ipv4.isValid() == true)
+filter(MyIngress.ipv4_forward) ~ match(hdr.ipv4.ttl > 0)

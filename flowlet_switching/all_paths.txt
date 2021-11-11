@@ -1,0 +1,6 @@
+hdr.ipv4.isValid() --> MyIngress.ipv4_lpm --> MyIngress.drop --> MyIngress.ecmp_group_to_nhop ## 0
+
+hdr.ipv4.isValid() --> MyIngress.ipv4_lpm --> MyIngress.ecmp_group --> MyIngress.ecmp_group_to_nhop ## 1
+
+hdr.ipv4.isValid() --> MyIngress.ipv4_lpm --> MyIngress.set_nhop --> MyIngress.ecmp_group_to_nhop ## 2
+

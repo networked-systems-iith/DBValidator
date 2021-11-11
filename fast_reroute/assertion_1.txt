@@ -1,0 +1,50 @@
+
+//ACTION DEF BEGIN
+action assert_check_pass_1(){
+	META_INSTANCE.assertion_check_1 = 1;
+}
+
+ //ACTION DEF END
+
+//ACTION DEF BEGIN
+action assert_check_fail_1(){
+	META_INSTANCE.assertion_check_1 = 0;
+}
+
+ //ACTION DEF END
+
+
+//BEGIN FILTER PATH
+	table assert_1_1{
+	key = {
+		 META_INSTANCE.BL : exact;
+	}
+	actions = {
+		assert_check_pass_1;
+		assert_check_fail_1;
+		NoAction;
+	}
+	const default_action = assert_check_fail_1;
+	const entries = {
+		 BLCODE(MyIngress.read_alternativePort): assert_check_pass_1();
+	} 
+}
+
+//END FILTER PATH
+
+//BEGIN MATCH EXP
+		if(meta.linkState>0){
+			assert_check_pass_1();
+		}else{
+			assert_check_fail_1();
+		}
+//END MATCH EXP
+//BEGIN FILTER INVOCATION 
+		assert_1_1.apply();
+	
+//END FILTER INVOCATION
+
+
+//META VAR DECLARE BEGIN
+	bit<1> assertion_check_1;
+//META VAR DECLARE END

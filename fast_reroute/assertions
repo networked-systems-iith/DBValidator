@@ -1,0 +1,1 @@
+filter(MyIngress.read_alternativePort) ~ match(meta.linkState > 0)

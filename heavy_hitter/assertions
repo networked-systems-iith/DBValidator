@@ -1,0 +1,2 @@
+filter(MyIngress.drop) ~ match(meta.counter_one > 1000 & meta.counter_two > 1000)
+filter(MyIngress.update_bloom_filter) ~ match(hdr.tcp.isValid()==true)

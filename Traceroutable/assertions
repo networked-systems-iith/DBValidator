@@ -1,0 +1,1 @@
+filter(MyIngress.set_nhop) ~ match(hdr.ipv4.isValid() == 1 & hdr.ipv4.ttl > 1)

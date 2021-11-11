@@ -1,0 +1,1 @@
+filter(MyIngress.drop) ~ match(hdr.ipv4.ttl==0)
