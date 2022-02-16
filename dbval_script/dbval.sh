@@ -46,7 +46,7 @@ read header_file
 
 path=`pwd`
 path="${path}/.."
-path=`find ${path} -name ${p4_file_name}`
+path=`find ${path} -maxdepth 2 -name ${p4_file_name}`
 path=`dirname ${path}`
 echo $path
 cd ${path}
