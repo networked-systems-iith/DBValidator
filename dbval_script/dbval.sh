@@ -44,6 +44,12 @@ read meta_name
 echo "\n\t Please provide header file name (eg: header.p4 \"Please include path as well if required.\"):"
 read header_file
 
+path=`pwd`
+path="${path}/.."
+path=`find ${path} -name ${p4_file_name}`
+path=`dirname ${path}`
+echo $path
+cd ${path}
 python p4_augmenter.py $p4_file_name $dot_file_name $json_file_name $ctrl_blk_name $meta_name
 
 python assertion_augmenter.py ${p4_file_name%".p4"}"_augmented.p4" $ctrl_blk_name $meta_name $header_file
