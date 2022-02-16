@@ -1,5 +1,5 @@
 # DBValidator
-To get P4 program augmented with assertion and BL codes, run the below command inside the directory:
+To get P4 program augmented with assertion and BL codes, run the below command inside the "dbval_script" directory:
 
 `$ bash dbval.sh`
 
