@@ -221,60 +221,58 @@ def get_meta_inst_name(p4_code, cnt_blk, meta):
 	meta_ind_beg = p4_code.find(" ",p4_code.find(meta, p4_code.find("control "+str(cnt_blk))))
 	meta_ind_end = p4_code.find(',',meta_ind_beg)
 
-	# print "\n\n@#@##@: ",p4_code[meta_ind_beg: meta_ind_end]
+	print "\n\n@#@##@: ",p4_code[meta_ind_beg: meta_ind_end]
 
 	meta_inst = p4_code[meta_ind_beg: meta_ind_end]
 	meta_inst = meta_inst.strip()
 	return meta_inst
 
 # This method extract all the paths and saves the all paths in text file and save pickle file for further use.
-def extract_paths(G, file_path):
-	leaf_nodes = [v for v, d in G.out_degree() if d == 0]
-	start_node = [v for v, d in G.in_degree() if d == 0]
+#def extract_paths(G, file_path):
+	##start_node = [v for v, d in G.in_degree() if d == 0]
 	# print "\n\t LEAF NODES: ", leaf_nodes
 	# print "\n\t START NODE : ",start_node
 
-	path_list = []
-	for leaf in leaf_nodes:
-	    for path in nx.all_simple_paths(G, source=start_node[0], target=leaf ):
-	        path_list.append(path)
-	        # print "\n\t path: ",path
+	##for leaf in leaf_nodes:
+	   # for path in nx.all_simple_paths(G, source=start_node[0], target=leaf ):
+	        #path_list.append(path)
+	        #print "\n\t path: ",path
 
 	# Extract edges in the path.
-	path_list_edges = []
-	for path in map(nx.utils.pairwise, path_list):
-	    path_list_edges.append(list(path)) 
+	#path_list_edges = []
+	#for path in map(nx.utils.pairwise, path_list):
+	    #path_list_edges.append(list(path)) 
 
-	path_list_edges_weights = []
-	for path in path_list_edges:
-	    weighted_path = list()
-	    weight_sum = 0
-	    for edge in path:
+	#path_list_edges_weights = []
+	#for path in path_list_edges:
+	    #weighted_path = list()
+	    #weight_sum = 0
+	    #for edge in path:
 	        # find the edge in weighted_edges and update the edge including weight in "path_list_edges_weights"
-	        matched_edge = list(filter(lambda e: e['src'] == edge[0] and e['dst'] == edge[1], weighted_edges))
-	        weight_sum = weight_sum + int(matched_edge[0]['weight'])
-	    path_list_edges_weights.append([path,weight_sum])
+	        #matched_edge = list(filter(lambda e: e['src'] == edge[0] and e['dst'] == edge[1], weighted_edges))
+	        #weight_sum = weight_sum + int(matched_edge[0]['weight'])
+	    #path_list_edges_weights.append([path,weight_sum])
 
 	# Creating paths by merging the edges.[[(A,B),(C,D)],10] to [[A,B,C,D],10]
-	all_paths = []
-	for path in path_list_edges_weights:
-		l = []
-		for e in path[0]:
-			l.append(str(e[0]))
-		l.append(str(e[1]))
-		all_paths.append([l,path[1]])
+	#all_paths = []
+	#for path in path_list_edges_weights:
+		#l = []
+		#for e in path[0]:
+			#l.append(str(e[0]))
+		#l.append(str(e[1]))
+		#all_paths.append([l,path[1]])
 
-	with open(file_path+"path_list.pkl",'wb') as f:
-	    pickle.dump(path_list_edges_weights, f, protocol=2)
+	#with open(file_path+"path_list.pkl",'wb') as f:
+	    #pickle.dump(path_list_edges_weights, f, protocol=2)
 
-	new_file=open(file_path+'all_paths.txt','w')
-	data = ""
-	for p in all_paths:
-		data = data + ' --> '.join(p[0]) + ' ## '+str(p[1])+"\n\n"
-		# print("\n\tPATHS: ",p)
+	#new_file=open(file_path+'all_paths.txt','w')
+	#data = ""
+	#for p in all_paths:
+		#data = data + ' --> '.join(p[0]) + ' ## '+str(p[1])+"\n\n"
+		#print("\n\tPATHS: ",p)
 
-	new_file.write(data)
-	new_file.close()
+	#new_file.write(data)
+	#new_file.close()
 
 def create_cfg(edges):
 
@@ -283,7 +281,9 @@ def create_cfg(edges):
 	for e in edges:
 		edges_tuples.append((e['src'], e['dst'], 0))
 	edges_tuples = list(set(edges_tuples))
-
+	for i in edges_tuples:
+		print i
+	
 
 	G = nx.DiGraph()
 	G.add_weighted_edges_from(edges_tuples)
@@ -291,10 +291,69 @@ def create_cfg(edges):
 	nx.draw_shell(G, with_labels = True, arrows=True, font_size=5, node_size=80, node_color='orange')
 	plt.savefig(file_path+'graph.pdf', dpi = 300, format='pdf', bbox_inches="tight")
 	plt.show(block=False)
+	try:
+		cycle =nx.algorithms.cycles.find_cycle(G, orientation="original")
+	except:
+		cycle=0
+	while cycle :
+		try:
+			G.remove_edge(cycle[-1][0],cycle[-1][1])
+		except:
+			pass
+		try:
+			cycle =nx.algorithms.cycles.find_cycle(G, orientation="original")
+		except:
+			cycle=0
 
-	G = nx.DiGraph()
-	G.add_weighted_edges_from(edges_tuples)
 
+	#####################################################################
+	################## CYCLE DETECTION & ELIMINATION ####################
+	#####################################################################
+
+	# cycle = []
+	# topological_order = []
+	# rev_topological_order = []
+	# while(1):
+	# 	G = nx.DiGraph()
+	# 	# G.add_nodes_from(all_clean_nodes)
+	# 	G.add_weighted_edges_from(edges_tuples)
+
+	# 	try:
+	# 		cycle=nx.algorithms.cycles.find_cycle(G, orientation="original")
+	# 		rev_topological_order = list(reversed(list(nx.topological_sort(G))))
+	# 	except:
+	# 		print("\n\t Cycle found in the graph...!!!", cycle)
+	# 	cycle1=[]
+	# 	cycle2=cycle
+	# 	for i in cycle:
+	# 		for j in cycle2:
+	# 			if (i[0] == j[1]):
+	# 				temp_edge=(j[0],j[1],0)
+	# 				cycle1.append(temp_edge)
+	# 		print 'cycle1:',cycle1
+
+	# 		print "\n\tCYCLE: ",cycle1[-1]
+	# 		edges_tuples.remove(cycle1[-1])
+	# 		print "\n\tUpdate Edges after Removing Cycles: ",len(edges_tuples), edges_tuples
+	#####################################################################
+	################## CYCLE DETECTION & ELIMINATION ####################
+	#####################################################################
+	#G = nx.DiGraph()
+	#G.add_weighted_edges_from(edges_tuples)
+
+	# cycle=nx.algorithms.cycles.find_cycle(G, orientation="original")
+	# print "\n\t >>>>>>>>>><<<<<<<<<<< CYCLES : ",cycle
+	# to_rem = (cycle[0][0], cycle[0][1], 0)
+	# print "\n\t >>>>>>>>>><<<<<<<<<<< to_rem : ",to_rem, to_rem in edges_tuples
+	# edges_tuples.remove(to_rem)
+
+	# print "UPDATED EDGES TUPLES: >>>>>>>>>>>>>"
+	# for i in edges_tuples:
+	# 	print i
+	# G = nx.DiGraph()
+	# G.add_weighted_edges_from(edges_tuples)
+	# cycle=nx.algorithms.cycles.find_cycle(G, orientation="original")
+	# print "\n\t >>>>>>>>>><<<<<<<<<<< CYCLES : ",cycle
 	topological_order = list(nx.topological_sort(G))
 	rev_topological_order = list(reversed(list(nx.topological_sort(G))))
 
@@ -317,12 +376,27 @@ def create_cfg(edges):
 				ind = weighted_edges.index({'src':e[0], 'dst':e[1],'weight': 0})
 				weighted_edges[ind]['weight'] = num_path[v]
 				num_path[v] = num_path[v] + num_path[e[1]]
+	e_list2 =[]
+	for i in weighted_edges:
+		e_list1 = [(i["src"], i["dst"], i["weight"])]
+		#print(e_list1)
+		e_list2.append(e_list1)
+	#print(e_list2)
+	flat_list = [item for sublist in e_list2 for item in sublist]
+	print(flat_list)
+	G1 = nx.DiGraph()
+	G1.add_weighted_edges_from(flat_list)
+	nx.draw(G1, with_labels=True)
+	pos=nx.spring_layout(G1)
+	labels = nx.get_edge_attributes(G1,'weight')
+	nx.draw_networkx_edge_labels(G1,pos,edge_labels=labels)
+
 	
 	###################################
 	#### END BALL-LARUS ALGORITHM ######
 	####################################
 
-	return G, weighted_edges
+	return G1, weighted_edges
 
 def get_next_same_con(new_data,node,req_ind):
 	#This function identifies the index of next similar condition in the code.
@@ -337,12 +411,44 @@ def get_next_same_con(new_data,node,req_ind):
 def augmenter(p4_filename, jsonfile, dotfile, cnt_blk, meta, weighted_edges, file_path):
 	import re
 
+	# jsonfile = "./dot files/03-L2_Flooding/Other ports/l2_flooding_other_ports.json"
+	# jsonfile = "./dot files/09-Traceroutable/traceroutable.json"
 	file_name = os.path.split(p4_filename)[1]
+	#file_path = os.path.split(p4_filename)[0]
+
+	# if file_path != "":
+	# 	file_path = file_path+'/'
+	# 	print "\n\tPATH : ",'/'+file_path
+	# else:
+	# 	file_path = ""
+	# 	print "\n\tPATH : ",os.getcwd()+'/'+file_path
 
 	conditions, node_to_condition = extract_conditionals(jsonfile)
 	actions = extract_actions(jsonfile, cnt_blk)
 	table_actions, tbl_to_action, tbl_to_table = extract_tables_actions(jsonfile, cnt_blk, actions)
 	tables = table_actions
+
+	# for ta in table_actions.keys():
+	# 	for ac in table_actions[ta]:
+	# 		if ac not in actions:
+	# 			actions.append(ac)
+
+	# conditions, node_to_condition = extract_conditionals(jsonfile)
+	# nodes = actions + table_actions.keys() + conditions.keys()
+	# additional_edges = create_additional_edges(nodes, node_to_condition, conditions, tbl_to_action, tbl_to_table)
+	# all_nodes = get_nodes(dotfile, nodes)
+	# edges = get_edges(dotfile, all_nodes, tbl_to_action)
+	# all_edges = create_all_edges(edges, table_actions) + additional_edges
+
+	# graph,weighted_edges = create_cfg(nodes, all_edges, table_actions.keys(), actions)
+	# tables = table_actions
+
+	print "\n\tTables :"
+	print tables.keys()
+
+
+	print "\n\t@@Weighted Edges :"
+	print weighted_edges
 
 	data = None
 	with open(p4_filename, 'r') as f:
@@ -368,7 +474,7 @@ def augmenter(p4_filename, jsonfile, dotfile, cnt_blk, meta, weighted_edges, fil
 
 			#If the "src" Node is an action then annotate the BL valriable to the Action.
 			if src in actions:
-				# print("\n\t ####1) ",we)
+				print("\n\t ####1) ",we)
 				# if 'NoAction' in src:
 				#     continue
 				nodes_and_weights[src] = weight
@@ -387,7 +493,7 @@ def augmenter(p4_filename, jsonfile, dotfile, cnt_blk, meta, weighted_edges, fil
 				# print("\n\tindex: ",req_ind," : ", src)
 			#If the "dst" Node is an action then annotate the BL valriable to the Action.
 			elif dst in actions:
-				# print("\n\t ####2) ",we)
+				print("\n\t ####2) ",we)
 				# if 'NoAction' in dst:
 				#     continue
 				nodes_and_weights[dst] = weight
@@ -402,7 +508,7 @@ def augmenter(p4_filename, jsonfile, dotfile, cnt_blk, meta, weighted_edges, fil
 					if req_ind != -1:
 						new_data = new_data[0:req_ind] + annotate_string + new_data[req_ind+1:]
 			elif src in conditions.keys() and dst in tables.keys():
-				# print("\n\t ####3) ",we)
+				print("\n\t ####3) ",we)
 				search_string = dst.split('.')[1]
 				nodes_and_weights[src] = weight
 				annotate_string = "\n\t"+meta_inst+" = "+meta_inst+" + "+str(weight)+";\n"
@@ -410,13 +516,15 @@ def augmenter(p4_filename, jsonfile, dotfile, cnt_blk, meta, weighted_edges, fil
 				req_ind = new_data.find("apply",req_ind)
 				req_ind = new_data.find(search_string+".apply()", req_ind)
 				req_ind = new_data.find(";",req_ind)
-				# print("\n\t req_ind: ",req_ind, new_data[req_ind:req_ind+20])
-				
+				print("\n\t req_ind: ",req_ind, new_data[req_ind:req_ind+20])
+				# req_ind = new_data.find("}", req_ind)
+
+				# print "\n\tHEREEEEEEE : ",src ,req_ind
 				if int(weight) > 0 and req_ind != -1:
 						new_data = new_data[0:req_ind+1] + annotate_string + new_data[req_ind+1:]
 
 			elif src in tables.keys() and dst in conditions.keys():
-				# print("\n\t ####4) ",we)
+				print("\n\t ####4) ",we)
 				nodes_and_weights[src] = weight
 				annotate_string = "\n\t"+meta_inst+" = "+meta_inst+" + "+str(weight)+";\n"
 				if '##' not in dst:
@@ -424,14 +532,14 @@ def augmenter(p4_filename, jsonfile, dotfile, cnt_blk, meta, weighted_edges, fil
 					req_ind = new_data.find(cnt_blk)
 					req_ind = new_data.find(search_string, req_ind)
 					# req_ind = new_data.rfind("{",0,req_ind)
-					# print("\n\t >>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<req_ind: ",new_data[req_ind-10:req_ind])
+					print("\n\t >>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<req_ind: ",new_data[req_ind-10:req_ind])
 					# req_ind = new_data.find("}", req_ind)
 				elif '##' in dst:
 					cnt = int(dst.split('##')[1])
 					search_string = dst.split('##')[0]
 					req_ind = new_data.find(cnt_blk)
 					req_ind = get_next_same_con(new_data,dst,req_ind)
-					# print("\n\t >>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<req_ind: ",new_data[req_ind-10:req_ind])
+					print("\n\t >>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<req_ind: ",new_data[req_ind-10:req_ind])
 					# for i in range(cnt):
 					# 	req_ind = new_data.find(search_string, req_ind+len(search_string))
 					# req_ind = new_data.find("{",0,req_ind)
@@ -439,7 +547,7 @@ def augmenter(p4_filename, jsonfile, dotfile, cnt_blk, meta, weighted_edges, fil
 				if int(weight) > 0 and req_ind != -1:
 					new_data = new_data[0:req_ind+1] + annotate_string + new_data[req_ind+1:]
 			elif src in conditions.keys() and dst in conditions.keys():
-				
+				print("\n\t ####5) ",we)
 				src_con_ind = 0
 				dst_con_ind = 0
 				search_string = dst
@@ -523,38 +631,38 @@ else:
 file_path = os.path.split(p4filename)[0]
 if file_path != "":
 	file_path = file_path+'/'
-	# print "\n\tPATH : ",'/'+file_path
+	print "\n\tPATH : ",'/'+file_path
 else:
 	file_path = ""
-	# print "\n\tPATH : ",os.getcwd()+'/'+file_path
+	print "\n\tPATH : ",os.getcwd()+'/'+file_path
 
 nodes_dict = get_nodes(dotfile, cnt_blk)
 nodes = nodes_dict.values()
 
 edges = get_edges(dotfile, nodes_dict)
-# print "\n\tEDGES : ",len(edges)
-# for e in edges:
-# 	print e
+print "\n\tEDGES : ",len(edges)
+for e in edges:
+	print e
 
 """Extracting Conditionals to nextNode and Controller generated to Conditionals from the json file."""
 conditions_to_nextstep, node_to_condition = extract_conditionals(jsonfile)
-# print "\n\t CONDITION TO NEXTSTEP: ",conditions_to_nextstep
-# print "\n\t NODE TO CONDITION: ",node_to_condition
+print "\n\t CONDITION TO NEXTSTEP: ",conditions_to_nextstep
+print "\n\t NODE TO CONDITION: ",node_to_condition
 
 actions = extract_actions(jsonfile, cnt_blk)
-# print "\n\t ACTIONS:",len(actions), actions
+print "\n\t ACTIONS:",len(actions), actions
 
 table_actions, tbl_to_action, tbl_to_table = extract_tables_actions(jsonfile, cnt_blk, actions)
-# print "\n\t TABLES: ", table_actions.keys()
-# print "\n\t TABLE ACTIONS: ", table_actions
+print "\n\t TABLES: ", table_actions.keys()
+print "\n\t TABLE ACTIONS: ", table_actions
 
 actual_nodes = []
 table_conditions = []
 actual_nodes = conditions_to_nextstep.keys() + table_actions.keys() + actions
 table_conditions = conditions_to_nextstep.keys() + table_actions.keys()
 
-# print "\n\tNODES(Before Removing) : ",len(nodes),nodes
-# print "\n\tACTUAL NODES : ",len(actual_nodes), actual_nodes
+print "\n\tNODES(Before Removing) : ",len(nodes),nodes
+print "\n\tACTUAL NODES : ",len(actual_nodes), actual_nodes
 # print "\n\t TABLE CONDITIONS: ", len(table_conditions), table_conditions
 to_del=[]
 for n in nodes:
@@ -565,7 +673,7 @@ for d in to_del:
 	nodes.remove(d)
 
 nodes = nodes + actions
-# print "\n\tNODES(After Removing + actions) : ",len(nodes),nodes
+print "\n\tNODES(After Removing + actions) : ",len(nodes),nodes
 
 rel_edge = edges
 for e in rel_edge:
@@ -580,11 +688,11 @@ for e in edge_to_del:
 	if e in rel_edge:
 		rel_edge.remove(e)
 
-# print "\n\t EDGE TO DELETE : ", len(edge_to_del),edge_to_del
+print "\n\t EDGE TO DELETE : ", len(edge_to_del),edge_to_del
 
-# print "\n\t EDGES AFTER ELIMINATING: ",len(rel_edge)
-# for i in rel_edge:
-# 	print(i)
+print "\n\t EDGES AFTER ELIMINATING: ",len(rel_edge)
+for i in rel_edge:
+	print(i)
 
 edges_tuples = []
 for e in edges:
@@ -601,25 +709,51 @@ start_node = [v for v, d in G.in_degree() if d == 0]
 updates_edges = append_missing_edges(table_actions, edges, leaf_nodes)
 
 # print "\n\t UPDATED EDGES: ",len(updates_edges)
-# for u in updates_edges:
-	# print u
+for u in updates_edges:
+	print u
 
 G1, weighted_edges = create_cfg(updates_edges)
 nx.write_gpickle(G1, file_path+"cfg.pkl")
 
-# print "\n\t Weighted Edges:"
-# for i in weighted_edges:
-# 	print(weighted_edges)
+print "\n\t Weighted Edges:"
+for i in weighted_edges:
+	print(weighted_edges)
 
-extract_paths(G1, file_path)
+#extract_paths(G1, file_path)
 
 with open(file_path+"weighted_edges.pkl",'wb') as f:
 	pickle.dump(weighted_edges, f, protocol=2)
 
 # print "\n\t WEIGHTED EDGES: ",len(weighted_edges)
-# for we in weighted_edges:
-# 	print(we)
+for we in weighted_edges:
+	print(we)
 
 augmenter(p4filename, jsonfile, dotfile, cnt_blk, meta, weighted_edges,file_path)
 # nx.draw_shell(G1, with_labels = True, arrows=True) 
+# plt.show()
+
+################################################
+############## TRIED BFS LOGIC #################
+################################################
+
+# topological_order = list(nx.topological_sort(G))
+# print "\n\t  topological_order: ",len(topological_order),topological_order
+
+# bfs_edge_list = list(nx.bfs_edges(G,topological_order[0]))
+# print "\n\t BFS: ",bfs_edge_list
+
+# def identify_next(bfs_edge_list, nodes, comp_node):
+# 	for e in bfs_edge_list:
+# 		if e[0] == comp_node and e[1] in nodes:
+# 			return e[1]
+# 		elif e[0] == comp_node and e[1] not in nodes:
+# 			identify_next(bfs_edge_list, nodes, e[1])
+
+# for e in edges:
+# 	if e['src'] in nodes and e['dst'] not in nodes:
+# 		n = identify_next(bfs_edge_list, nodes, e['dst'])
+# 		print "\n\t Src Node :", e['src']
+# 		print "\n\t Next Node :", n
+
+# nx.draw_shell(G, with_labels = True, arrows=True) 
 # plt.show()

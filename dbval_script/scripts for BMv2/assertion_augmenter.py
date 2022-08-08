@@ -37,8 +37,9 @@ def aug_action_def(code, action_def, cnt_blk):
 		ind = code.find("{", ind_cnt_blk.span()[1])
 		code = code[0:ind+1] + action_def + code[ind+2:]
 
+		print "\nACTION DEF: ", action_def
 	else:
-		print("Control block not found. Please specify correct control block...!!!")
+		print("1) Control block not found. Please specify correct control block...!!!")
 		exit(0)
 
 	return code
@@ -52,7 +53,7 @@ def aug_match_path(code, match_path, cnt_blk): # USING MATCH-ACTION TABLES
 		ind = code.find("{",ind)
 		code = code[0:ind+1] + match_path + code[ind+2:]
 	else:
-		print("Control block not found. Please specify correct control block...!!!")
+		print("1) Control block not found. Please specify correct control block...!!!")
 		exit(0)
 	# code = code[0:ind_cnt_blk+1] + match_path + code[ind_cnt_blk+2:]
 
@@ -66,7 +67,7 @@ def aug_filter_path(code, filter_path, cnt_blk): # USING MATCH-ACTION TABLES
 		ind = code.find("{",ind)
 		code = code[0:ind+1] + filter_path + code[ind+2:]
 	else:
-		print("Control block not found. Please specify correct control block...!!!")
+		print("2) Control block not found. Please specify correct control block...!!!")
 		exit(0)
 
 	return code
@@ -82,9 +83,11 @@ def aug_apply_block(code, apply_block, cnt_blk):
 		ind_apply = code.find("{", code.find('apply {',ind))
 		# p = re.compile(r'apply {')
 		# ind_apply = re.search(p, code[ind:]).span()
-		# code = code[0:ind_apply[1]+1] + apply_block + code[ind_apply[1]+2:]		
+		# code = code[0:ind_apply[1]+1] + apply_block + code[ind_apply[1]+2:]
+		print("\n#######1))"+code[ind_apply-50:ind_apply+50])
+		
 	else:
-		print("Control block not found. Please specify correct control block...!!!")
+		print("3) Control block not found. Please specify correct control block...!!!")
 		exit(0)
 	
 	stk = deque()
@@ -118,6 +121,8 @@ def update_metadata_file(var_names, meta, header):
 
 	for i in var_names:
 		str_to_aug = str_to_aug + "\n\t" + i
+	print "\n\tHEADER : ",str_to_aug
+	print "\n\tHEADER : ",header
 	with open(header,'r') as h:
 		head = h.read()
 		index = head.find('{', head.find('struct '+meta)) + 1
@@ -131,6 +136,7 @@ def update_metadata_name(code, meta_name, cnt_blk):
 	pat = re.compile(r'control[\s]+{}[\s]*\('.format(cnt_blk))
 	ind_cnt_blk = re.search(pat, code)
 
+	print("\n\t SwitchIngress: ",code[ind_cnt_blk.span()[0] : ind_cnt_blk.span()[1]])
 	name = ""
 	if ind_cnt_blk is not None:
 		ind_beg = code.find(meta_name, ind_cnt_blk.span()[1]) + len(meta_name)
@@ -217,61 +223,271 @@ def assert_augmenter(p4_file, assert_list, cnt_blk, meta, header):
 		p4_code = update_metadata(p4_code,var_to_augment, meta)
 	else:
 		update_metadata_file(var_to_augment, meta, header)
+		print "\n\t CALLING : update_metadata_file"
 	p4_code = update_metadata_name(p4_code, meta, cnt_blk)
 	with open(file_path+file_name.split('.')[0]+"_assertion.p4",'w') as f:
 		f.write(p4_code)
 	return p4_code
 
 #This method will get the BL codes from the list of paths.
-def get_bl_codes(path_list, path):
+def get_bl_codes(wel_paths, paths):
 	bl_codes = []
 	stk_nodes = []
 	beg = 0
 	end = 0
+	for i in range(len(paths)):
+		if paths[i] in ['*','^','@']:
+			stk_nodes.append(paths[beg : i])
+			stk_nodes.append(paths[i])
+			end = i
+			beg = i+1
+	stk_nodes.append(paths[beg : i+1])
+	print("\nPATH NODE LIST : ",stk_nodes)
+	if len(stk_nodes)==0:
+		stk_nodes.append(paths)
+	intermediate_nodes= []
+	intermediate_nodes= stk_nodes
+
+	with open(file_path+wel_paths, 'rb') as f:
+		paths_edges= pickle.load(f)
+	labels=nx.get_edge_attributes(paths_edges, 'weight')
+	#print(labels)
+
+
+	leaf_nodes1 = [v for v, d in paths_edges.out_degree() if d == 0]
+	print ("\n\t LEAF NODES: ", leaf_nodes1)
+	print(type(leaf_nodes1))
+	start_node = [v for v, d in paths_edges.in_degree() if d == 0]
+	print("start node",start_node)
+	source_node = start_node[0]
+	destination_node =leaf_nodes1
+	final_list = [[source_node]]
 	
-	for i in range(len(path)):
+	if len(intermediate_nodes)==0:
+		for destination_node in destination_nodes:
+			for path in nx.all_simple_paths(paths_edges, source= source_node, target= destination_node):
+				print(path)
+			final_list.append(path)
+	else:
+		consecutive_symbols = False
+		no_symbol_in_start_end = False
+		for node in source_node:
+			if node in ['@',"*","^"]:
+				no_symbol_in_start_end = True
+				print("Error : Starting node cannot be symbol")
+				break
+		for node in destination_node:
+			if node in ['@',"*","^"]:
+				print("Error : Leaf node cannot be symbol")
+				break
+		length_intermediate_nodes = len(intermediate_nodes)
+		
+		if length_intermediate_nodes>1:
+			i=0
+			while(i<length_intermediate_nodes-1):
+				if (intermediate_nodes[i] in ['@',"*","^"]) and (intermediate_nodes[(i+1)] in ['@',"*","^"]):
+					print("Error : Two consecutive nodes cannot be symbol, ",intermediate_nodes[i]," at position ",i,", ",intermediate_nodes[i+1]," at position ",i+1)
+					consecutive_symbols = True
+					break
+				i+=1
+		if(consecutive_symbols==False and no_symbol_in_start_end==False):
+			all_nodes = []
+			all_nodes.append(source_node)
+			for intermediate_node in intermediate_nodes:
+				all_nodes.append(intermediate_node)
+			all_nodes.append(destination_node)
+			print("all_nodes", all_nodes)
+			
+			length_all_nodes = len(all_nodes)
+			
+			i = 0
+			is_path_broken = False
+			is_multiple_path_exist_in_at_sign = False
+			while(i<length_all_nodes-1):
 
-	    if path[i] in ['*','^','@']:
-	        stk_nodes.append(path[beg : i])
-	        stk_nodes.append(path[i])
-	        end = i
-	        beg = i+1
-	stk_nodes.append(path[beg : i+1])
+				if all_nodes[(i+1)] in ['@','*','^']:
+					if all_nodes[(i+1)] == '@':
+						direct_path_exist = False
+						temporary_list_1 =[]
+						temporary_list_2 = []
+						temporary_no_of_paths = 0
+						temporary_no_of_paths2 = 0
+						if type(all_nodes[i+2])==list:
+							for index_of_list_in_all_nodes in all_nodes[i+2]:
+								for path in nx.all_simple_paths(paths_edges, source= all_nodes[i], target= index_of_list_in_all_nodes, cutoff=1):
+									direct_path_exist = True
+									path.remove(all_nodes[i])
+									temporary_list_1.append(path)
+									temporary_no_of_paths += 1
+								if direct_path_exist == True:
+									for path in nx.all_simple_paths(paths_edges, source= all_nodes[i], target= index_of_list_in_all_nodes):
+										temporary_no_of_paths2 += 1
+									if (temporary_no_of_paths == temporary_no_of_paths2):
+										for j in final_list:
+											for k in temporary_list_1:
+												temp_path = j+k
+												temporary_list_2.append(temp_path)
+										final_list = temporary_list_2
+									else:
+										is_multiple_path_exist_in_at_sign = True
+										break
+								else:
+									is_path_broken = True
+									break
+							i+=2
+						else:
+							for path in nx.all_simple_paths(paths_edges, source= all_nodes[i], target= all_nodes[i+2], cutoff=1):
+								direct_path_exist = True
+								path.remove(all_nodes[i])
+								temporary_list_1.append(path)
+								temporary_no_of_paths += 1
+							if direct_path_exist == True:
+								for path in nx.all_simple_paths(paths_edges, source= all_nodes[i], target= all_nodes[i+2]):
+									temporary_no_of_paths2 += 1
+								if (temporary_no_of_paths == temporary_no_of_paths2):
+									for j in final_list:
+										for k in temporary_list_1:
+											temp_path = j+k
+											temporary_list_2.append(temp_path)
+									final_list = temporary_list_2
+								else:
+									is_multiple_path_exist_in_at_sign = True
+									break
+							else:
+								is_path_broken = True
+								break
+							i+=2
+					elif all_nodes[(i+1)] == "*":
+						
+						temporary_list_1 =[]
+						temporary_list_2 = []
+						if type(all_nodes[i+2])==list:
+							
+							for index_of_list_in_all_nodes in all_nodes[i+2]:
+								for path in nx.all_simple_paths(paths_edges, source= all_nodes[i], target= index_of_list_in_all_nodes):
+									path.remove(all_nodes[i])
+									temporary_list_1.append(path)
+							for j in final_list:
+								for k in temporary_list_1:
+									temp_path = j+k
+									temporary_list_2.append(temp_path)
+							final_list = temporary_list_2
+							i+=2
+						else:
+							
+							for path in nx.all_simple_paths(paths_edges, source= all_nodes[i], target= all_nodes[i+2]):
+								path.remove(all_nodes[i])
+								temporary_list_1.append(path)
+							for j in final_list:
+								for k in temporary_list_1:
+									temp_path = j+k
+									temporary_list_2.append(temp_path)
+							final_list = temporary_list_2
+							print("temp_final_list", final_list)
+							i+=2
+					elif all_nodes[(i+1)] == '^':
+						direct_path_exist = False
+						temporary_list_1 =[]
+						temporary_list_2 = []
+						if type(all_nodes[i+2])==list:
+							for index_of_list_in_all_nodes in all_nodes[i+2]:
+								for path in nx.all_simple_paths(paths_edges, source= all_nodes[i], target= index_of_list_in_all_nodes, cutoff=1):
+									direct_path_exist = True
+									path.remove(all_nodes[i])
+									temporary_list_1.append(path)
+							if direct_path_exist == True:
+								for j in final_list:
+									for k in temporary_list_1:
+										temp_path = j+k
+										temporary_list_2.append(temp_path)
+								final_list = temporary_list_2
+							else:
+								is_path_broken = True
+								break
+							i+=2
+						else:
+							for path in nx.all_simple_paths(paths_edges, source= all_nodes[i], target= all_nodes[i+2], cutoff=1):
+								direct_path_exist = True
+								path.remove(all_nodes[i])
+								temporary_list_1.append(path)
+							if direct_path_exist == True:
+								for j in final_list:
+									for k in temporary_list_1:
+										temp_path = j+k
+										temporary_list_2.append(temp_path)
+								final_list = temporary_list_2
+							else:
+								is_path_broken = True
+								break
+							i+=2
+				else:
+					temporary_list_1 =[]
+					temporary_list_2 = []
+					if type(all_nodes[i+1])==list:
+						for index_of_list_in_all_nodes in all_nodes[i+1]:
+							for path in nx.all_simple_paths(paths_edges, source= all_nodes[i], target= index_of_list_in_all_nodes):
+								path.remove(all_nodes[i])
+								temporary_list_1.append(path)
+						for j in final_list:
+							for k in temporary_list_1:
+								temp_path = j+k
+								temporary_list_2.append(temp_path)
+						final_list = temporary_list_2
+						i+=1
+					else:
+						
+						for path in nx.all_simple_paths(paths_edges, source= all_nodes[i], target= all_nodes[i+1]):
+							path.remove(all_nodes[i])
+							temporary_list_1.append(path)
+						for j in final_list:
+							for k in temporary_list_1:
+								temp_path = j+k
+								temporary_list_2.append(temp_path)
+						final_list = temporary_list_2
+						
+						i+=1	
+	if (not is_path_broken) and (not is_multiple_path_exist_in_at_sign):
+		print(final_list)
+	else:
+		if is_path_broken:
+			final_list = []
+			print("Path Not Exist between ",all_nodes[i]," and ",all_nodes[i+2])
+		if is_multiple_path_exist_in_at_sign:
+			final_list = []
+			print("Multiple Path Exist between ",all_nodes[i]," and ",all_nodes[i+2]," in the @ clouse")
 
-   	if len(stk_nodes)==0:
-   		stk_nodes.append(path)
 
-	for p in path_list:
-		nodes_ind = []
-		sorted_nodes_ind = []
-		last_join = ""
-		nodes = []
-		for node in stk_nodes:
-			if node not in ['^','@','*']:
-				nodes.append(node)
-				# print "\nnode : ", node
-				if last_join == "" or last_join == "*":
-					if node in p[0] and len(nodes_ind)==0:
-						nodes_ind.append(p[0].index(node))
-					elif node in p[0] and len(nodes_ind)>0:
-						if p[0].index(node) > nodes_ind[-1]:
-							nodes_ind.append(p[0].index(node))
-				elif last_join == "^" or last_join == "@" :
-					if node in p[0]:
-						if len(nodes_ind)>0 and nodes_ind[-1] == p[0].index(node)-1:
-							nodes_ind.append(p[0].index(node))							
-			else:
-				last_join = node
-
-		sorted_nodes_ind = nodes_ind
-		sorted_nodes_ind.sort()
-
-		if nodes_ind == sorted_nodes_ind and len(nodes)==len(nodes_ind):
-			bl_codes.append(p[1])
-			# bl_codes.append(hex(p[1]))
-	bl_codes = list(set(bl_codes))
-
+	print("\n\n\nFinal List that contains intermediate nodes :\n\n", final_list)
+	path_list_edges = []
+	for path in map(nx.utils.pairwise, final_list):
+		path_list_edges.append(list(path))
+	path_list1 =[]
+	for i in path_list_edges:
+		weight_sum =0
+		in_list =[]
+		for j in i:
+			weight_sum += labels[j]
+			in_list.append(j)
+		in_list2=[]
+		in_list2.append(in_list)
+		in_list2.append(weight_sum)
+		path_list1.append(in_list2)
+	final_path_list = []
+	for path in path_list1:
+		l = []
+		for e1 in path[0]:
+			l.append(str(e1[0]))
+		l.append(str(e1[1]))
+		final_path_list.append([l,path[1]])
+	print( "\nPATHS : ", final_path_list)
+	list5=[]
+	for i in final_path_list:
+		list5.append(i[1])
+	bl_codes = list(set(list5))
+	print(type(bl_codes))
+	print(len(bl_codes))
 	return bl_codes
+	
 
 ##This method convert list of BL code into ranges.
 def get_ranges(bl):
@@ -286,23 +502,8 @@ def get_ranges(bl):
 
 #### UPDATE BLCODES ##
 def update_bl_codes(p4_code, wel_paths):
-	path_list = []
-	paths_edges = None
-	code = None
-	bl_codes = list()
-	bl_codes_int = list()
-	bl_code_ranges = list()
-	str_to_aug = ""
-	with open(file_path+wel_paths, 'rb') as f:
-		paths_edges = pickle.load(f)
-
-	# Creating paths by merging the edges.[[(A,B),(C,D)],10] to [[A,B,C,D],10]
-	for path in paths_edges:
-		l = []
-		for e in path[0]:
-			l.append(str(e[0]))
-		l.append(str(e[1]))
-		path_list.append([l,path[1]])
+	import networkx as nx
+	
 
 	for x in range(p4_code.count("BLCODE")):
 		# i = re.search(BLCODE, p4_code)
@@ -320,14 +521,26 @@ def update_bl_codes(p4_code, wel_paths):
 			x = line.find(')',0,line.find(':',i))
 			str_to_replace = line[line.find(BLCODE):x+1]
 
+		print "\n LINE : ", line,"\n"
+		
+		
+		print "\nstr_to_replace : ",str_to_replace ,'\n'
+
 		path = str_to_replace[len(BLCODE)+1 : len(str_to_replace)-1]
 
-		bl_codes = get_bl_codes(path_list, path)
+		bl_codes = get_bl_codes(wel_paths, path)
 
 		bl_code_ranges = get_ranges(bl_codes)
 		
+		#print("\n\tBL CODES: ", type(bl_codes[0]), bl_codes)
+
+		# for bl in bl_codes:
+		# 	str_to_aug = str_to_aug + line.replace(str_to_replace,str(bl)) + "\n\t"
+		
 		for bl in bl_code_ranges:
 			str_to_aug = str_to_aug + line.replace(str_to_replace,str(hex(bl[0]))+".."+str(hex(bl[1]))) + "\n\t"
+
+		print(str_to_aug)
 
 		p4_code = p4_code[0:i-2] + str_to_aug + p4_code[j+1:]
 	return p4_code
@@ -343,6 +556,7 @@ if len(sys.argv) != 5 and len(sys.argv) != 4:
 	print("\n\tPLEASE SPECIFY <P4 FILE NAME> <CONTROL BLOCK NAME> <USER METADATA NAME(eg: metadata_t)> <header.p4> or \"\"")
 	exit(0)
 else:
+	print("P4 FILE NAME = ",sys.argv[1])
 	p4_file = sys.argv[1]
 	control_block = sys.argv[2]
 	meta_name = sys.argv[3]
@@ -354,9 +568,11 @@ else:
 file_path = os.path.split(p4_file)[0]
 if file_path != "":
 	file_path = file_path+'/'
+	print "\n\tPATH : ",'/'+file_path
 	list_of_files = os.listdir(file_path)
 else:
 	file_path = ""
+	print "\n\tPATH : ",os.getcwd()+'/'+file_path
 	list_of_files = os.listdir(os.getcwd())
 
 
@@ -374,20 +590,28 @@ for l in list_of_files:
 	if m is not None:
 		dict_of_files[int(((l.split('.')[0]).split('_')[1]))] = l
 
+
 for k in sorted(dict_of_files.keys()):
 	sorted_list_of_files.append(dict_of_files[k])
 
 #### AUGMENTINg ASSERTIONS ####
 updated_p4_code = ""
 updated_p4_code = assert_augmenter(p4_file, sorted_list_of_files[::-1], control_block, meta_name, header)
-
+import networkx as nx
 #### UPDATING BL CODES IN PLACE OF PLACEHOLDERS ####
-if 'path_list.pkl' in list_of_files:
-	pass
+if 'cfg.pkl' in list_of_files:
+	print("\n\tcfg.pkl EXIST....!!!!\n")
 else:
-	print("\n\tFILE : path_list.pkl doesnot exist...!!!\n")
+	print("\n\tFILE : cfg.pkl doesnot exist...!!!\n")
 	exit(0)
-p4_code = update_bl_codes(updated_p4_code,'path_list.pkl')
+infile = open("cfg.pkl",'rb')
+new_dict1 = pickle.load(infile)
+
+labels=nx.get_edge_attributes(new_dict1, 'weight')
+#print(labels)
+
+
+p4_code = update_bl_codes(updated_p4_code,'cfg.pkl')
 
 # file_path = os.path.split(p4filename)[0]
 # print "\n\tPATH : ",file_path
