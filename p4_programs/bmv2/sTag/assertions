@@ -1,0 +1,1 @@
+filter(ingress.get_source_color) ~ match(hdr.stag.isValid()== false)
