@@ -1,0 +1,35 @@
+digraph SwitchIngress {
+subgraph cluster {
+graph [
+label="", labeljust=r, style=bold];
+0[label=__START__, margin="", shape=rectangle, style=solid];
+1[label=__EXIT__, margin="", shape=rectangle, style=solid];
+2[label="ig_intr_md.resubmit_flag == 0;", margin="", shape=rectangle, style=solid];
+3[label=tbl_tna_resubmit293, margin="", shape=ellipse, style=solid];
+4[label="SwitchIngress.pass_one", margin="", shape=ellipse, style=solid];
+5[label="md.resub_type == 255;", margin="", shape=rectangle, style=solid];
+6[label="SwitchIngress.pass_two_type_a", margin="", shape=ellipse, style=solid];
+7[label="md.resub_type == 0;", margin="", shape=rectangle, style=solid];
+8[label="SwitchIngress.pass_two_type_b", margin="", shape=ellipse, style=solid];
+9[label="md.resub_type == 1;", margin="", shape=rectangle, style=solid];
+10[label="SwitchIngress.pass_two_type_c", margin="", shape=ellipse, style=solid];
+11[label=tbl_tna_resubmit305, margin="", shape=ellipse, style=solid];
+12[label=tbl_tna_resubmit308, margin="", shape=ellipse, style=solid];
+0 -> 2[label=""];
+2 -> 3[label=TRUE];
+2 -> 5[label=FALSE];
+3 -> 4[label=""];
+4 -> 12[label=""];
+5 -> 6[label=TRUE];
+5 -> 7[label=FALSE];
+6 -> 12[label=""];
+7 -> 8[label=TRUE];
+7 -> 9[label=FALSE];
+8 -> 12[label=""];
+9 -> 10[label=TRUE];
+9 -> 11[label=FALSE];
+10 -> 12[label=""];
+11 -> 12[label=""];
+12 -> 1[label=""];
+}
+}
