@@ -1,0 +1,44 @@
+
+//ACTION DEF BEGIN
+action assert_check_pass_1(){
+	META_INSTANCE.assertion_check_1 = 1;
+}
+
+ //ACTION DEF END
+
+//ACTION DEF BEGIN
+action assert_check_fail_1(){
+	META_INSTANCE.assertion_check_1 = 0;
+}
+
+ //ACTION DEF END
+
+
+//BEGIN MATCH PATH
+	table assert_1_1{
+	key = {
+		 META_INSTANCE.BL : exact;
+		META_INSTANCE.assertion_check_1 : exact;
+	}
+	actions = {
+		assert_check_pass_1;
+		assert_check_fail_1;
+		NoAction;
+	}
+	const default_action = assert_check_fail_1;
+	const entries = {
+		 (BLCODE(SwitchIngress.acl*SwitchIngress.nat),1): assert_check_pass_1();
+	} 
+}
+
+//END MATCH PATH
+
+//BEGIN MATCH INVOCATION 
+		assert_1_1.apply();
+	
+//END MATCH INVOCATION
+
+
+//META VAR DECLARE BEGIN
+	bit<1> assertion_check_1;
+//META VAR DECLARE END

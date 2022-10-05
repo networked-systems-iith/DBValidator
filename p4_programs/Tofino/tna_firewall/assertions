@@ -1,0 +1,3 @@
+match(SwitchIngress.acl*SwitchIngress.nat)
+filter(SwitchIngress.acl@SwitchIngress.allow) ~ match(SwitchIngress.nat@SwitchIngress.rewrite)
+filter(hdr.ethernet.ether_type != 0x0800) ~ match(SwitchIngress.acl@SwitchIngress.deny)

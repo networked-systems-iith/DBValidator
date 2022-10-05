@@ -1,0 +1,29 @@
+digraph SwitchIngress {
+subgraph cluster {
+graph [
+label="", labeljust=r, style=bold];
+0[label=__START__, margin="", shape=rectangle, style=solid];
+1[label=__EXIT__, margin="", shape=rectangle, style=solid];
+2[label=tbl_tna_firewall158, margin="", shape=ellipse, style=solid];
+3[label="hdr.ethernet.ether_type == 2048;", margin="", shape=rectangle, style=solid];
+4[label=tbl_tna_firewall160, margin="", shape=ellipse, style=solid];
+5[label="hdr.ipv4.protocol == 6;", margin="", shape=rectangle, style=solid];
+6[label=tbl_tna_firewall165, margin="", shape=ellipse, style=solid];
+7[label=tbl_tna_firewall169, margin="", shape=ellipse, style=solid];
+8[label="SwitchIngress.acl", margin="", shape=ellipse, style=solid];
+9[label="SwitchIngress.nat", margin="", shape=ellipse, style=solid];
+10[label=tbl_tna_firewall176, margin="", shape=ellipse, style=solid];
+0 -> 2[label=""];
+2 -> 3[label=""];
+3 -> 4[label=TRUE];
+3 -> 5[label=FALSE];
+4 -> 5[label=""];
+5 -> 6[label=TRUE];
+5 -> 7[label=FALSE];
+6 -> 8[label=""];
+7 -> 8[label=""];
+8 -> 9[label=""];
+9 -> 10[label=""];
+10 -> 1[label=""];
+}
+}
