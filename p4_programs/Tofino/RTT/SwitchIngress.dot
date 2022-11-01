@@ -1,0 +1,63 @@
+digraph SwitchIngress {
+subgraph cluster {
+graph [
+label="", labeljust=r, style=bold];
+0[label=__START__, margin="", shape=rectangle, style=solid];
+1[label=__EXIT__, margin="", shape=rectangle, style=solid];
+2[label=tbl_route_to, margin="", shape=ellipse, style=solid];
+3[label="SwitchIngress.tb_decide_packet_type", margin="", shape=ellipse, style=solid];
+4[label="ig_md.pkt_type;", margin="", shape=rectangle, style=solid];
+5[label=tbl_compute_eack, margin="", shape=ellipse, style=solid];
+6[label=tbl_compute_eack_0, margin="", shape=ellipse, style=solid];
+7[label=tbl_compute_eack_1, margin="", shape=ellipse, style=solid];
+8[label=tbl_compute_eack_2, margin="", shape=ellipse, style=solid];
+9[label=tbl_compute_eack_3, margin="", shape=ellipse, style=solid];
+10[label=tbl_compute_eack_4, margin="", shape=ellipse, style=solid];
+11[label="hdr.tcp.flags == 2;", margin="", shape=rectangle, style=solid];
+12[label=tbl_compute_eack_last_if_syn, margin="", shape=ellipse, style=solid];
+13[label="ig_md.pkt_type;", margin="", shape=rectangle, style=solid];
+14[label=tbl_get_pkt_signature_SEQ, margin="", shape=ellipse, style=solid];
+15[label=tbl_get_location_SEQ, margin="", shape=ellipse, style=solid];
+16[label=tbl_get_pkt_signature_ACK, margin="", shape=ellipse, style=solid];
+17[label=tbl_get_location_ACK, margin="", shape=ellipse, style=solid];
+18[label="ig_md.pkt_type;", margin="", shape=rectangle, style=solid];
+19[label=tbl_exec_table_1_insert, margin="", shape=ellipse, style=solid];
+20[label=tbl_exec_table_1_tryRead, margin="", shape=ellipse, style=solid];
+21[label="ig_md.pkt_type;", margin="", shape=rectangle, style=solid];
+22[label=tbl_RTT513, margin="", shape=ellipse, style=solid];
+23[label="ig_md.table_1_read == 0;", margin="", shape=rectangle, style=solid];
+24[label=tbl_RTT517, margin="", shape=ellipse, style=solid];
+25[label=tbl_RTT520, margin="", shape=ellipse, style=solid];
+0 -> 2[label=""];
+2 -> 3[label=""];
+3 -> 4[label=""];
+4 -> 5[label=TRUE];
+4 -> 13[label=FALSE];
+5 -> 6[label=""];
+6 -> 7[label=""];
+7 -> 8[label=""];
+8 -> 9[label=""];
+9 -> 10[label=""];
+10 -> 11[label=""];
+11 -> 12[label=TRUE];
+11 -> 13[label=FALSE];
+12 -> 13[label=""];
+13 -> 14[label=TRUE];
+13 -> 16[label=FALSE];
+14 -> 15[label=""];
+15 -> 18[label=""];
+16 -> 17[label=""];
+17 -> 18[label=""];
+18 -> 19[label=TRUE];
+18 -> 20[label=FALSE];
+19 -> 21[label=""];
+20 -> 21[label=""];
+21 -> 22[label=TRUE];
+21 -> 23[label=FALSE];
+22 -> 1[label=""];
+23 -> 24[label=TRUE];
+23 -> 25[label=FALSE];
+24 -> 1[label=""];
+25 -> 1[label=""];
+}
+}
