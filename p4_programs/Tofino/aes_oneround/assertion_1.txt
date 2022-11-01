@@ -1,0 +1,66 @@
+
+//ACTION DEF BEGIN
+action assert_check_pass_1(){
+	META_INSTANCE.assertion_check_1 = 1;
+}
+
+ //ACTION DEF END
+
+//ACTION DEF BEGIN
+action assert_check_fail_1(){
+	META_INSTANCE.assertion_check_1 = 0;
+}
+
+ //ACTION DEF END
+
+
+//BEGIN FILTER PATH
+	table assert_1_1{
+	key = {
+		 META_INSTANCE.BL : exact;
+	}
+	actions = {
+		assert_check_pass_1;
+		assert_check_fail_1;
+		NoAction;
+	}
+	const default_action = assert_check_fail_1;
+	const entries = {
+		 BLCODE(SwitchIngress.drop): assert_check_pass_1();
+	} 
+}
+
+//END FILTER PATH
+
+//BEGIN MATCH PATH
+	table assert_1_2{
+	key = {
+		 META_INSTANCE.BL : exact;
+		META_INSTANCE.assertion_check_1 : exact;
+	}
+	actions = {
+		assert_check_pass_1;
+		assert_check_fail_1;
+		NoAction;
+	}
+	const default_action = assert_check_fail_1;
+	const entries = {
+		 (BLCODE(hdr.aes.isValid()),1): assert_check_pass_1();
+	} 
+}
+
+//END MATCH PATH
+//BEGIN FILTER INVOCATION 
+		assert_1_1.apply();
+	
+//END FILTER INVOCATION
+
+//BEGIN MATCH INVOCATION 
+		assert_1_2.apply();
+	
+//END MATCH INVOCATION
+
+
+//META VAR DECLARE BEGIN
+	bit<1> assertion_check_1;
+//META VAR DECLARE END
